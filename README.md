@@ -1,73 +1,98 @@
-# React + TypeScript + Vite
+# use-read-aloud
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A lightweight React hook that adds text-to-speech (read aloud) functionality using the Web Speech API.
 
-Currently, two official plugins are available:
+This hook is designed for blogs, articles, and reading-focused applications.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Installation
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install use-read-aloud
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Peer dependency
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- react >= 18
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Usage
+
+```tsx
+import { useReadAloud } from "use-read-aloud";
+
+function AudioPlayer({ text }: { text: string }) {
+  const { isReading, isPaused, toggle, start, reset } = useReadAloud(
+    () => text,
+    { rate: 1 }
+  );
+
+  return (
+    <div>
+      <button onClick={toggle}>
+        {isReading && !isPaused ? "Pause" : "Play"}
+      </button>
+
+      {isReading && <button onClick={start}>Restart</button>}
+      <button onClick={reset}>Stop</button>
+    </div>
+  );
+}
 ```
+
+## API
+
+```
+useReadAloud(getText, options?)
+```
+
+### Parameters
+
+- getText - A function that returns the text to read.
+
+- options
+
+```ts
+type Options = {
+  rate?: number; // default: 1
+  pitch?: number; // default: 1
+};
+```
+
+### Returns
+
+```ts
+{
+  isReading: boolean;
+  isPaused: boolean;
+  start: () => void;
+  toggle: () => void;
+  reset: () => void;
+}
+```
+
+## Behavior
+
+- Long text is automatically split into smaller chunks for reliability
+
+- Speech is cancelled automatically when the component unmounts
+
+- Pause and resume are handled safely using internal session tracking
+
+## Browser support
+
+This hook uses the Web Speech API.
+
+Supported:
+
+- Chrome
+
+- Edge
+
+- Safari
+
+Not supported:
+
+- Firefox
+
+## License
+
+MIT
