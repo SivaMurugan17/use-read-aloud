@@ -13,22 +13,22 @@ describe("useReadAloud", () => {
     vi.clearAllMocks();
   });
 
-  it("starts reading and sets isReading", () => {
-    const { result } = renderHook(() => useReadAloud(() => TEXT));
+  it("starts reading", () => {
+    const { result } = renderHook(() => useReadAloud(TEXT));
 
     act(() => {
-      result.current.start();
+      result.current.play();
     });
 
-    expect(result.current.isReading).toBe(true);
+    expect(result.current.isPaused).toBe(false);
     expect(speechSynthesis.speak).toHaveBeenCalled();
   });
 
   it("pauses reading", () => {
-    const { result } = renderHook(() => useReadAloud(() => TEXT));
+    const { result } = renderHook(() => useReadAloud(TEXT));
 
     act(() => {
-      result.current.start();
+      result.current.play();
       result.current.pause();
     });
 
@@ -37,12 +37,12 @@ describe("useReadAloud", () => {
   });
 
   it("resumes reading after pause", () => {
-    const { result } = renderHook(() => useReadAloud(() => TEXT));
+    const { result } = renderHook(() => useReadAloud(TEXT));
 
     act(() => {
-      result.current.start();
+      result.current.play();
       result.current.pause();
-      result.current.resume();
+      result.current.play();
     });
 
     expect(result.current.isPaused).toBe(false);
@@ -50,26 +50,26 @@ describe("useReadAloud", () => {
     expect(speechSynthesis.speak).toHaveBeenCalled();
   });
 
-  it("resets reading", () => {
-    const { result } = renderHook(() => useReadAloud(() => TEXT));
+  it("replays reading", () => {
+    const { result } = renderHook(() => useReadAloud(TEXT));
 
     act(() => {
-      result.current.start();
-      result.current.reset();
+      result.current.play();
+      result.current.replay();
     });
 
-    expect(result.current.isReading).toBe(false);
+    expect(result.current.isPaused).toBe(false);
     expect(speechSynthesis.cancel).toHaveBeenCalled();
+    expect(speechSynthesis.speak).toHaveBeenCalled();
   });
 
   it("does nothing if text is empty", () => {
-    const { result } = renderHook(() => useReadAloud(() => ""));
+    const { result } = renderHook(() => useReadAloud(""));
 
     act(() => {
-      result.current.start();
+      result.current.play();
     });
 
-    expect(result.current.isReading).toBe(false);
     expect(speechSynthesis.speak).not.toHaveBeenCalled();
   });
 });

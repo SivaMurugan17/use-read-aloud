@@ -18,21 +18,47 @@ npm install use-read-aloud
 
 ```tsx
 import { useReadAloud } from "use-read-aloud";
+import { useState } from "react";
+import {
+  FastForward,
+  Minus,
+  Pause,
+  Play,
+  Plus,
+  Rewind,
+  RotateCcw,
+  Volume2,
+} from "lucide-react";
 
 function AudioPlayer({ text }: { text: string }) {
-  const { isReading, isPaused, toggle, start, reset } = useReadAloud(
-    () => text,
-    { rate: 1 }
-  );
+  const [playBackSpeed, setPlayBackSpeed] = useState<number>(1);
+
+  const { isPaused, togglePlay, fastForward, seekBackward, replay } =
+    useReadAloud(text, {
+      rate: playBackSpeed,
+    });
 
   return (
     <div>
-      <button onClick={toggle}>
-        {isReading && !isPaused ? "Pause" : "Play"}
+      <button onClick={seekBackward}>
+        <Rewind />
       </button>
-
-      {isReading && <button onClick={start}>Restart</button>}
-      <button onClick={reset}>Stop</button>
+      <button onClick={togglePlay}>{isPaused ? <Play /> : <Pause />}</button>
+      <button onClick={fastForward}>
+        <FastForward />
+      </button>
+      <button onClick={replay}>
+        <RotateCcw />
+      </button>
+      <span>
+        <button onClick={() => setPlayBackSpeed(playBackSpeed - 0.25)}>
+          <Minus />
+        </button>
+        {`${playBackSpeed}x`}
+        <button onClick={() => setPlayBackSpeed(playBackSpeed + 0.25)}>
+          <Plus />
+        </button>
+      </span>
     </div>
   );
 }
@@ -41,14 +67,14 @@ function AudioPlayer({ text }: { text: string }) {
 ## API
 
 ```
-useReadAloud(getText, options?)
+useReadAloud(text, options?)
 ```
 
 ### Parameters
 
-- getText - A function that returns the text to read.
+- text - the text to be read.
 
-- options
+- options - options to specify rate and pitch of the speech
 
 ```ts
 type Options = {
@@ -61,11 +87,13 @@ type Options = {
 
 ```ts
 {
-  isReading: boolean;
   isPaused: boolean;
-  start: () => void;
-  toggle: () => void;
-  reset: () => void;
+  play: () => void;
+  pause: () => void;
+  replay: () => void;
+  seekBackward: () => void;
+  fastForward: () => void;
+  togglePlay: () => void;
 }
 ```
 

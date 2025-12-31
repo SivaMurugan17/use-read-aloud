@@ -28,12 +28,11 @@ function splitIntoChunks(text: string) {
   return chunks;
 }
 
-export function useReadAloud(getText: () => string, options: Options = {}) {
+export function useReadAloud(text: string, options: Options = {}) {
   const { rate = 1, pitch = 1 } = options;
 
-  const [isReading, setIsReading] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const sessionRef = useRef(0);
+  const [isPaused, setIsPaused] = useState(true);
+  const isPausedRef = useRef(true);
 
   const queueRef = useRef<string[]>([]);
   const indexRef = useRef(0);
@@ -44,21 +43,21 @@ export function useReadAloud(getText: () => string, options: Options = {}) {
   }, []);
 
   const initializeQueue = useCallback(() => {
-    const raw = getText();
-    if (!raw.trim()) return;
+    if (!text.trim()) {
+      return;
+    }
 
-    const paragraphs = raw
+    const paragraphs = text
       .split(/\n+/)
       .map((p) => p.trim())
       .filter(Boolean);
     queueRef.current = paragraphs.flatMap(splitIntoChunks);
     indexRef.current = 0;
-  }, [getText]);
+  }, [text]);
 
-  // this is called to clean up the states - after reset
   const finish = useCallback(() => {
-    setIsReading(false);
-    setIsPaused(false);
+    isPausedRef.current = true;
+    setIsPaused(true);
   }, []);
 
   const reset = useCallback(() => {
@@ -68,92 +67,97 @@ export function useReadAloud(getText: () => string, options: Options = {}) {
   }, [resetQueue, finish]);
 
   const speakChunk = useCallback(() => {
-    const sessionId = sessionRef.current;
-
     // everything is read out
     if (indexRef.current >= queueRef.current.length) {
       finish();
       return;
     }
 
+    // speak current utterance
     const utterance = new SpeechSynthesisUtterance(
       queueRef.current[indexRef.current]
     );
     utterance.rate = rate;
     utterance.pitch = pitch;
+    speechSynthesis.speak(utterance);
 
+    // callbacks
     utterance.onend = () => {
-      if (sessionId !== sessionRef.current) {
-        return;
-      }
-
       // read next chunk at the end of every chunk
       indexRef.current += 1;
       speakChunk();
     };
 
     utterance.onerror = () => {
-      if (sessionId !== sessionRef.current) {
-        return;
-      }
-      reset();
+      // do nothing
     };
-
-    speechSynthesis.speak(utterance);
-  }, [finish, reset, pitch, rate]);
-
-  const start = useCallback(() => {
-    reset();
-    /* 
-      Invalidate old callbacks (onEnd, onError) - when starting a speech.
-      This prevents the "onError" callbacks to be invoked if we are interrupting the previous speech 
-    */
-    sessionRef.current += 1;
-
-    setIsReading(true);
-    setIsPaused(false);
-
-    initializeQueue();
-
-    speakChunk();
-  }, [initializeQueue, speakChunk]);
+  }, [finish, pitch, rate]);
 
   const pause = useCallback(() => {
     setIsPaused(true);
+    isPausedRef.current = true;
 
     speechSynthesis.pause();
   }, []);
 
-  const resume = useCallback(() => {
+  const play = useCallback(() => {
     setIsPaused(false);
+    isPausedRef.current = false;
 
-    /* 
-      Invalidate old callbacks (onEnd, onError) - when resuming a speech.
-      This prevents the "onError" callbacks to be invoked if we are interrupting the previous speech 
-    */
-    sessionRef.current += 1;
+    // if we are starting freshly
+    if (queueRef.current.length === 0) {
+      initializeQueue();
+    }
 
     /*
-      We are expected to use this, but it is failing to resume - after long pauses
       speechSynthesis.resume();
-
-      so, a workaround for this is used here - cancelling and starting the speech manually
+      We are expected to use this, but it is failing to resume after long pauses.
+      So, a workaround for this is used here - cancelling and starting the speech manually.
     */
     speechSynthesis.cancel();
     speakChunk();
-  }, [speakChunk]);
+  }, [speakChunk, initializeQueue]);
 
+  const replay = useCallback(() => {
+    reset();
+    play();
+  }, [reset, play]);
+
+  const seekBackward = useCallback(() => {
+    indexRef.current = Math.max(indexRef.current - 1, 0);
+    if (!isPausedRef.current) {
+      play();
+    }
+  }, [play]);
+
+  const fastForward = useCallback(() => {
+    indexRef.current = indexRef.current + 1;
+    if (!isPausedRef.current) {
+      play();
+    }
+  }, [play]);
+
+  // handle rate changes
+  useEffect(() => {
+    if (isPausedRef.current) {
+      speechSynthesis.cancel();
+    } else {
+      play();
+    }
+  }, [rate, play]);
+
+  // clean up
   useEffect(() => {
     return () => reset();
   }, [reset]);
 
   return {
-    isReading,
     isPaused,
-    start,
-    reset,
+    play,
     pause,
-    resume,
-    toggle: isReading ? (isPaused ? resume : pause) : start,
+    replay,
+    seekBackward,
+    fastForward,
+    togglePlay: isPaused ? play : pause,
   };
 }
