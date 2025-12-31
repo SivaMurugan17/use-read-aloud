@@ -121,6 +121,10 @@ Not supported:
 
 - Firefox
 
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md)
+
 ## License
 
 MIT
