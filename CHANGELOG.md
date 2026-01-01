@@ -4,6 +4,14 @@
 
 ### Fixed
 
+- Handled overflow when fast forwarding
+- Added logic to reset to the start, once the entire text is read
+- Updated README
+
+## 1.0.1
+
+### Fixed
+
 - Published correct build artifacts (previous 1.0.0 contained outdated output)
 
 ## 1.0.0

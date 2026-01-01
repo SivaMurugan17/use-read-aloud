@@ -9,6 +9,7 @@
     "react",
     "react-hook",
     "text-to-speech",
+    "tts",
     "speech-synthesis",
     "read-aloud",
     "web-speech-api"

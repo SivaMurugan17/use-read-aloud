@@ -1,8 +1,15 @@
 # use-read-aloud
 
-A lightweight React hook that adds text-to-speech (read aloud) functionality using the Web Speech API.
+A lightweight React hook for reliable text-to-speech (read aloud) in the browser. Designed for long-form content like blogs and articles using the Web Speech API.
 
-This hook is designed for blogs, articles, and reading-focused applications.
+This hook is designed to work around common Web Speech API issues such as:
+
+- Random failures when reading long text
+- Unreliable behavior when resuming after long pauses
+- Missing controls like fast-forward, rewind, etc.
+
+> Note : This works fully on the client side using the browser’s built-in text-to-speech engines.
+> No external APIs or dependencies are required.
 
 ## Installation
 
@@ -10,59 +17,25 @@ This hook is designed for blogs, articles, and reading-focused applications.
 npm install use-read-aloud
 ```
 
-## Peer dependency
-
-- react >= 18
-
 ## Usage
 
 ```tsx
 import { useReadAloud } from "use-read-aloud";
-import { useState } from "react";
-import {
-  FastForward,
-  Minus,
-  Pause,
-  Play,
-  Plus,
-  Rewind,
-  RotateCcw,
-  Volume2,
-} from "lucide-react";
 
-function AudioPlayer({ text }: { text: string }) {
-  const [playBackSpeed, setPlayBackSpeed] = useState<number>(1);
-
-  const { isPaused, togglePlay, fastForward, seekBackward, replay } =
-    useReadAloud(text, {
-      rate: playBackSpeed,
-    });
+function AudioPlayer() {
+  const { isPaused, togglePlay } = useReadAloud("Text to be read");
 
   return (
-    <div>
-      <button onClick={seekBackward}>
-        <Rewind />
-      </button>
-      <button onClick={togglePlay}>{isPaused ? <Play /> : <Pause />}</button>
-      <button onClick={fastForward}>
-        <FastForward />
-      </button>
-      <button onClick={replay}>
-        <RotateCcw />
-      </button>
-      <span>
-        <button onClick={() => setPlayBackSpeed(playBackSpeed - 0.25)}>
-          <Minus />
-        </button>
-        {`${playBackSpeed}x`}
-        <button onClick={() => setPlayBackSpeed(playBackSpeed + 0.25)}>
-          <Plus />
-        </button>
-      </span>
-    </div>
+    <>
+      <button onClick={togglePlay}>{isPaused ? "Play" : "Pause"}</button>
+    </>
   );
 }
 ```
+
+## Demo
+
+A live demo can be found in [this blog](https://pragmaticswe.com/post/escaping-the-new-year-resolutions-matrix), which uses this library under the hood.
 
 ## API
 
@@ -72,9 +45,9 @@ useReadAloud(text, options?)
 
 ### Parameters
 
-- text - the text to be read.
+- text - the text to be read
 
-- options - options to specify rate and pitch of the speech
+- options - additional options to change the rate and pitch of the speech
 
 ```ts
 type Options = {
@@ -97,17 +70,86 @@ type Options = {
 }
 ```
 
+## Examples
+
+1. Fast forward / seek backward
+
+```tsx
+import { useReadAloud } from "use-read-aloud";
+
+function AudioPlayer() {
+  const { isPaused, togglePlay, fastForward, seekBackward } =
+    useReadAloud("Text to be read");
+
+  return (
+    <>
+      <button onClick={seekBackward}>Rewind</button>
+      <button onClick={togglePlay}>{isPaused ? "Play" : "Pause"}</button>
+      <button onClick={fastForward}>FastForward</button>
+    </>
+  );
+}
+```
+
+2. Speed up / slow down
+
+```tsx
+import { useReadAloud } from "use-read-aloud";
+import { useState } from "react";
+
+function AudioPlayer() {
+  const [playBackSpeed, setPlayBackSpeed] = useState<number>(1);
+
+  const { isPaused, togglePlay } = useReadAloud("Text to be read", {
+    rate: playBackSpeed,
+  });
+
+  return (
+    <>
+      <button onClick={togglePlay}>{isPaused ? "Play" : "Pause"}</button>
+      <span>
+        <button onClick={() => setPlayBackSpeed(playBackSpeed - 0.25)}>
+          Minus
+        </button>
+        {`${playBackSpeed}x`}
+        <button onClick={() => setPlayBackSpeed(playBackSpeed + 0.25)}>
+          Plus
+        </button>
+      </span>
+    </>
+  );
+}
+```
+
+3. Replay from the start
+
+```tsx
+import { useReadAloud } from "use-read-aloud";
+
+function AudioPlayer() {
+  const { isPaused, togglePlay, replay } = useReadAloud("Text to be read");
+
+  return (
+    <>
+      <button onClick={togglePlay}>{isPaused ? "Play" : "Pause"}</button>
+      <button onClick={replay}>Replay</button>
+    </>
+  );
+}
+```
+
 ## Behavior
 
-- Long text is automatically split into smaller chunks for reliability
+- Long text is automatically split into smaller chunks of sentences for reliability.
+- A workaround is used as a replacement for the inconsistent `speechSynthesis.resume()` function. (This may restart the current sentence, which is generally acceptable and far more reliable.)
 
-- Speech is cancelled automatically when the component unmounts
+## Peer dependency
 
-- Pause and resume are handled safely using internal session tracking
+- react >= 18
 
 ## Browser support
 
-This hook uses the Web Speech API.
+This hook uses the browser built-in Web Speech API, which is supported by most modern browsers. But, the voice quality varies by browser.
 
 Supported:
 
@@ -119,7 +161,7 @@ Supported:
 
 Not supported:
 
-- Firefox
+- Firefox (does not support the Web Speech API)
 
 ## Changelog
 

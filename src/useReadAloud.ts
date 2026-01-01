@@ -58,6 +58,9 @@ export function useReadAloud(text: string, options: Options = {}) {
   const finish = useCallback(() => {
     isPausedRef.current = true;
     setIsPaused(true);
+
+    // reset to the start of the queue, if everything is read
+    indexRef.current = 0;
   }, []);
 
   const reset = useCallback(() => {
@@ -131,7 +134,10 @@ export function useReadAloud(text: string, options: Options = {}) {
   }, [play]);
 
   const fastForward = useCallback(() => {
-    indexRef.current = indexRef.current + 1;
+    indexRef.current = Math.min(
+      indexRef.current + 1,
+      queueRef.current.length - 1
+    );
     if (!isPausedRef.current) {
       play();
     }
