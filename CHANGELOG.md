@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1
+
+### Fixed
+
+- Published correct build artifacts (previous 1.0.0 contained outdated output)
+
 ## 1.0.0
 
 ### Changed
