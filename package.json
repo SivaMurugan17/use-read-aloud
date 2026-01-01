@@ -1,6 +1,6 @@
 {
   "name": "use-read-aloud",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "description": "A React hook for reading text aloud using the Web Speech API",
   "author": "Siva Murugan",
